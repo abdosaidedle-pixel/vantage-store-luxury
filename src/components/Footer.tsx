@@ -25,17 +25,16 @@ export default function Footer() {
               © {currentYear} VANTAGE Store. All rights reserved.
             </p>
             
-            <div className={`flex items-center gap-1 text-xs ${dark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div className={`flex items-center gap-1.5 text-xs ${dark ? 'text-gray-400' : 'text-gray-600'}`}>
               <span>Web Designer:</span>
               <a 
                 href="https://abdosaidedle-pixel.github.io/Portofolio-Abdo-main/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gold font-bold hover:underline transition-all"
+                className="text-gold font-bold hover:text-gold-light transition-all border-b border-transparent hover:border-gold"
               >
                 Abdo Said
               </a>
-              <Heart size={12} className="text-red-500 fill-red-500" />
             </div>
           </div>
         </div>

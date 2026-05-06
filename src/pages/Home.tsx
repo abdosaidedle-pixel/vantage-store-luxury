@@ -219,8 +219,18 @@ export default function Home() {
           <h2 className={`text-3xl font-bold mb-3 ${dark ? 'text-white' : 'text-black-main'}`}>{lang === 'en' ? 'Subscribe to our Newsletter' : 'اشترك في نشرتنا الإخبارية'}</h2>
           <p className={`mb-6 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{lang === 'en' ? 'Get exclusive deals and updates' : 'احصل على عروض وتحديثات حصرية'}</p>
           <div className="flex gap-2 max-w-md mx-auto">
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('email')} className={`flex-1 px-4 py-3 rounded-xl border-2 ${dark ? 'bg-dark-card border-dark-border text-white' : 'bg-white border-gray-200'}`} />
-            <button className="bg-gold hover:bg-gold-light text-black-main font-bold px-6 py-3 rounded-xl transition-all hover:scale-105"><Send size={20} /></button>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('email')} className={`flex-1 px-4 py-3 rounded-xl border-2 outline-none transition-all ${dark ? 'bg-dark-card border-dark-border text-white focus:border-gold' : 'bg-white border-gray-200 focus:border-gold'}`} />
+            <button 
+              onClick={() => {
+                if (email) {
+                  import('react-hot-toast').then(t => t.default.success(lang === 'ar' ? 'تم الاشتراك بنجاح' : 'Subscribed successfully'));
+                  setEmail('');
+                }
+              }}
+              className="bg-gold hover:bg-gold-light text-black-main font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 active:scale-95"
+            >
+              <Send size={20} />
+            </button>
           </div>
         </motion.div>
 
@@ -248,40 +258,29 @@ export default function Home() {
         <motion.div initial="hidden" whileInView="visible" variants={stagger} viewport={{ once: true }} className="mb-20">
           <h2 className={`text-3xl md:text-4xl font-bold mb-10 text-center ${dark ? 'text-white' : 'text-black-main'}`} style={{ fontFamily: lang === 'ar' ? "'Cairo'" : "'Playfair Display'" }}>{lang === 'en' ? 'Contact Us' : 'اتصل بنا'}</h2>
           <div className="max-w-2xl mx-auto">
-            <form className="space-y-4">
-              <input type="text" placeholder={lang === 'en' ? 'Your Name' : 'اسمك'} className={`w-full px-5 py-3 rounded-xl border-2 ${dark ? 'bg-dark-card border-dark-border text-white' : 'bg-white border-gray-200'}`} />
-              <input type="email" placeholder={t('email')} className={`w-full px-5 py-3 rounded-xl border-2 ${dark ? 'bg-dark-card border-dark-border text-white' : 'bg-white border-gray-200'}`} />
-              <textarea placeholder={lang === 'en' ? 'Your Message' : 'رسالتك'} rows={4} className={`w-full px-5 py-3 rounded-xl border-2 ${dark ? 'bg-dark-card border-dark-border text-white' : 'bg-white border-gray-200'}`} />
-              <button type="submit" className="w-full bg-gold hover:bg-gold-light text-black-main font-bold py-3 rounded-xl transition-all hover:scale-105">{lang === 'en' ? 'Send Message' : 'إرسال الرسالة'}</button>
+            <form 
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const name = formData.get('name');
+                const message = formData.get('message');
+                const whatsappUrl = `https://wa.me/201027116120?text=${encodeURIComponent(`Name: ${name}\nMessage: ${message}`)}`;
+                window.open(whatsappUrl, '_blank');
+              }}
+            >
+              <input name="name" required type="text" placeholder={lang === 'en' ? 'Your Name' : 'اسمك'} className={`w-full px-5 py-3 rounded-xl border-2 outline-none transition-all ${dark ? 'bg-dark-card border-dark-border text-white focus:border-gold' : 'bg-white border-gray-200 focus:border-gold'}`} />
+              <input name="email" required type="email" placeholder={t('email')} className={`w-full px-5 py-3 rounded-xl border-2 outline-none transition-all ${dark ? 'bg-dark-card border-dark-border text-white focus:border-gold' : 'bg-white border-gray-200 focus:border-gold'}`} />
+              <textarea name="message" required placeholder={lang === 'en' ? 'Your Message' : 'رسالتك'} rows={4} className={`w-full px-5 py-3 rounded-xl border-2 outline-none transition-all ${dark ? 'bg-dark-card border-dark-border text-white focus:border-gold' : 'bg-white border-gray-200 focus:border-gold'}`} />
+              <button type="submit" className="w-full bg-gold hover:bg-gold-light text-black-main font-bold py-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-gold/20 flex items-center justify-center gap-2">
+                <Send size={20} />
+                {lang === 'en' ? 'Send Message via WhatsApp' : 'إرسال عبر واتساب'}
+              </button>
             </form>
           </div>
         </motion.div>
       </div>
 
-      {/* Footer */}
-      <motion.footer initial="hidden" whileInView="visible" variants={stagger} viewport={{ once: true }} className={`border-t-2 py-16 ${dark ? 'bg-black-main border-dark-border' : 'bg-soft-gray border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid md:grid-cols-4 gap-10 mb-10">
-            <div>
-              <h3 className={`font-bold text-xl mb-4 flex items-center gap-2 ${dark ? 'text-white' : 'text-black-main'}`}><ShoppingBag className="text-gold" size={24} /> {lang === 'en' ? 'Vantage' : 'فانتاج'}</h3>
-              <p className={`${dark ? 'text-gray-400' : 'text-gray-600'}`}>{lang === 'en' ? 'Premium shopping experience' : 'تجربة تسوق فاخرة'}</p>
-            </div>
-            {['shop', 'support', 'company'].map((col, i) => (
-              <div key={i}>
-                <h4 className={`font-bold mb-3 ${dark ? 'text-white' : 'text-black-main'}`}>{lang === 'en' ? ['Shop', 'Support', 'Company'][i] : ['تسوق', 'الدعم', 'الشركة'][i]}</h4>
-                <ul className="space-y-2">
-                  {['Products', 'Categories', 'Blog'].map((item, j) => (
-                    <li key={j}><Link to="/" className={`hover:text-gold transition-colors ${dark ? 'text-gray-400' : 'text-gray-600'}`}>{item}</Link></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className={`border-t-2 pt-6 text-center ${dark ? 'border-dark-border text-gray-400' : 'border-gray-200 text-gray-600'}`}>
-            <p>&copy; 2025 {lang === 'en' ? 'Vantage' : 'فانتاج'}. {lang === 'en' ? 'All rights reserved' : 'جميع الحقوق محفوظة'}.</p>
-          </div>
-        </div>
-      </motion.footer>
     </div>
   );
 }
