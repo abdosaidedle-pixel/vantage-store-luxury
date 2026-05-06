@@ -220,15 +220,18 @@ export default function Admin() {
                         <td className={`p-4 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>{product.category}</td>
                         <td className="p-4">
                           <div className="flex gap-2">
-                            <button onClick={() => { setEditingProduct(product); setShowAddProduct(true); }} className="p-2 hover:bg-gold/10 rounded-lg text-gold">
+                            <button onClick={() => { setEditingProduct(product); setShowAddProduct(true); }} className="p-2 hover:bg-gold/10 rounded-lg text-gold transition-colors">
                               <Edit size={16} />
                             </button>
                             <button onClick={() => {
-                              if (confirm(t('confirm'))) {
-                                setProducts(prev => prev.filter(p => p.id !== product.id));
+                              if (window.confirm(t('confirm'))) {
+                                setProducts(prev => {
+                                  const updated = prev.filter(p => p.id !== product.id);
+                                  return updated;
+                                });
                                 toast.success(t('productDeleted'));
                               }
-                            }} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500">
+                            }} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -455,11 +458,21 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
     rating: 4.5,
     reviews: 0,
     badge: undefined,
-    featured: false,
     createdAt: '',
   });
 
-  const inputClass = `w-full px-4 py-2.5 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white' : 'bg-soft-gray border-gray-200 text-black-main'}`;
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm(f => ({ ...f, images: [reader.result as string, ...f.images.slice(1)] }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const inputClass = `w-full px-4 py-2.5 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white focus:border-gold/50' : 'bg-soft-gray border-gray-200 text-black-main focus:border-gold'} outline-none transition-all`;
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
@@ -535,8 +548,42 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
             </div>
           </div>
           <div>
-            <label className={`block text-xs font-medium mb-1 ${dark ? 'text-gray-400' : 'text-gray-600'}`}>Image URL</label>
-            <input value={form.images[0]} onChange={e => setForm(f => ({ ...f, images: [e.target.value, ...f.images.slice(1)] }))} className={inputClass} />
+            <label className={`block text-xs font-medium mb-1 ${dark ? 'text-gray-400' : 'text-gray-600'}`}>{lang === 'ar' ? 'صور المنتج' : 'Product Images'}</label>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden ${dark ? 'border-dark-border' : 'border-gray-200'}`}>
+                  {form.images[0] ? (
+                    <img src={form.images[0]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Plus size={20} className="text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`inline-block px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${dark ? 'bg-gold text-black-main hover:bg-gold-light' : 'bg-black-main text-white hover:bg-black/80'}`}
+                  >
+                    {lang === 'ar' ? 'رفع صورة من الجهاز' : 'Upload from Device'}
+                  </label>
+                  <p className={`text-[10px] mt-1 ${dark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {lang === 'ar' ? 'أو أدخل رابط الصورة بالأسفل' : 'Or enter image URL below'}
+                  </p>
+                </div>
+              </div>
+              <input 
+                placeholder="https://example.com/image.jpg"
+                value={form.images[0]} 
+                onChange={e => setForm(f => ({ ...f, images: [e.target.value, ...f.images.slice(1)] }))} 
+                className={inputClass} 
+              />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={form.featured} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))} className="accent-gold w-4 h-4" />
