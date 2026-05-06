@@ -13,9 +13,7 @@ export default function Checkout() {
   const shipping = cartTotal >= 500 ? 0 : 50;
   const total = cartTotal + shipping;
 
-  const [paymentMethod, setPaymentMethod] = useState<'vodafone_cash' | 'cod'>('cod');
-  const [paymentRef, setPaymentRef] = useState('');
-  const [screenshotName, setScreenshotName] = useState('');
+  const [paymentMethod] = useState<'cod'>('cod');
   const [customer, setCustomer] = useState<CustomerInfo>({
     fullName: '', phone: '', altPhone: '', address: '', governorate: '', city: '', notes: ''
   });
@@ -32,7 +30,8 @@ export default function Checkout() {
   const generateWhatsAppMessage = () => {
     const items = cart.map(item => {
       const name = lang === 'ar' ? item.product.nameAr : item.product.nameEn;
-      return `• ${name} × ${item.quantity} = ${item.product.price * item.quantity} ${t('egp')}`;
+      const colorText = item.selectedColor ? ` [Color: ${item.selectedColor}]` : '';
+      return `• ${name}${colorText} × ${item.quantity} = ${item.product.price * item.quantity} ${t('egp')}`;
     }).join('\n');
 
     const msg = `
@@ -169,46 +168,15 @@ ${paymentMethod === 'vodafone_cash' ? `📋 *${t('paymentRef')}:* ${paymentRef}`
               >
                 <h3 className={`font-bold text-lg mb-6 ${dark ? 'text-white' : 'text-black-main'}`}>{t('paymentMethod')}</h3>
                 <div className="space-y-3">
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-gold bg-gold/5' : dark ? 'border-dark-border hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-gold w-4 h-4" />
+                  <div className={`flex items-center gap-4 p-4 rounded-xl border-2 ${dark ? 'border-gold bg-gold/5' : 'border-gold bg-gold/5'}`}>
                     <Truck size={22} className="text-gold" />
                     <div>
                       <p className={`font-semibold ${dark ? 'text-white' : 'text-black-main'}`}>{t('cashOnDelivery')}</p>
                       <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{lang === 'ar' ? 'ادفع عند استلام الطلب' : 'Pay when you receive your order'}</p>
                     </div>
-                  </label>
-
-                  <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === 'vodafone_cash' ? 'border-gold bg-gold/5' : dark ? 'border-dark-border hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input type="radio" name="payment" checked={paymentMethod === 'vodafone_cash'} onChange={() => setPaymentMethod('vodafone_cash')} className="accent-gold w-4 h-4" />
-                    <CreditCard size={22} className="text-gold" />
-                    <div>
-                      <p className={`font-semibold ${dark ? 'text-white' : 'text-black-main'}`}>{t('vodafoneCash')}</p>
-                      <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{lang === 'ar' ? 'ادفع عبر فودافون كاش' : 'Pay via Vodafone Cash'}</p>
-                    </div>
-                  </label>
+                  </div>
                 </div>
 
-                {paymentMethod === 'vodafone_cash' && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 space-y-4">
-                    <div className={`p-4 rounded-xl text-sm whitespace-pre-line ${dark ? 'bg-gold/10 text-gold border border-gold/20' : 'bg-gold/10 text-gold-dark border border-gold/20'}`}>
-                      {t('vodafoneInstructions')}
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{t('paymentRef')}</label>
-                      <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} className={inputClass} placeholder="e.g. TXN123456" />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{t('uploadScreenshot')}</label>
-                      <label className={`flex items-center gap-3 p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all hover:border-gold ${dark ? 'border-dark-border' : 'border-gray-300'}`}>
-                        <Upload size={20} className="text-gold" />
-                        <span className={`text-sm ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {screenshotName || (lang === 'ar' ? 'اضغط لرفع الصورة' : 'Click to upload')}
-                        </span>
-                        <input type="file" accept="image/*" onChange={handleScreenshot} className="hidden" />
-                      </label>
-                    </div>
-                  </motion.div>
-                )}
               </motion.div>
             </div>
 
@@ -225,7 +193,12 @@ ${paymentMethod === 'vodafone_cash' ? `📋 *${t('paymentRef')}:* ${paymentRef}`
                         <img src={item.product.images[0]} alt={name} className="w-14 h-14 rounded-lg object-cover shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm font-medium truncate ${dark ? 'text-white' : 'text-black-main'}`}>{name}</p>
-                          <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>× {item.quantity}</p>
+                          <div className="flex items-center gap-2">
+                            <p className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>× {item.quantity}</p>
+                            {item.selectedColor && (
+                              <div className="w-3 h-3 rounded-full border border-gray-300" style={{ background: item.selectedColor }} />
+                            )}
+                          </div>
                         </div>
                         <span className="text-gold text-sm font-bold">{item.product.price * item.quantity}</span>
                       </div>

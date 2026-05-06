@@ -55,7 +55,7 @@ export default function Cart() {
               const name = lang === 'ar' ? item.product.nameAr : item.product.nameEn;
               return (
                 <motion.div
-                  key={item.product.id}
+                  key={`${item.product.id}-${item.selectedColor}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -68,6 +68,12 @@ export default function Cart() {
                     <Link to={`/product/${item.product.id}`}>
                       <h3 className={`font-semibold mb-1 truncate hover:text-gold ${dark ? 'text-white' : 'text-black-main'}`}>{name}</h3>
                     </Link>
+                    {item.selectedColor && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{lang === 'ar' ? 'اللون' : 'Color'}:</span>
+                        <div className="w-4 h-4 rounded-full border border-gray-300" style={{ background: item.selectedColor }} />
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-gold font-bold">{item.product.price} {t('egp')}</span>
                       {item.product.oldPrice && (
@@ -76,17 +82,17 @@ export default function Cart() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div className={`flex items-center rounded-lg border ${dark ? 'border-dark-border' : 'border-gray-200'}`}>
-                        <button onClick={() => updateCartQty(item.product.id, item.quantity - 1)} className="p-2">
+                        <button onClick={() => updateCartQty(item.product.id, item.quantity - 1, item.selectedColor)} className="p-2">
                           <Minus size={14} className={dark ? 'text-white' : 'text-black-main'} />
                         </button>
                         <span className={`px-3 text-sm font-semibold ${dark ? 'text-white' : 'text-black-main'}`}>{item.quantity}</span>
-                        <button onClick={() => updateCartQty(item.product.id, item.quantity + 1)} className="p-2">
+                        <button onClick={() => updateCartQty(item.product.id, item.quantity + 1, item.selectedColor)} className="p-2">
                           <Plus size={14} className={dark ? 'text-white' : 'text-black-main'} />
                         </button>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`font-bold ${dark ? 'text-white' : 'text-black-main'}`}>{item.product.price * item.quantity} {t('egp')}</span>
-                        <button onClick={() => removeFromCart(item.product.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
+                        <button onClick={() => removeFromCart(item.product.id, item.selectedColor)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                           <Trash2 size={16} />
                         </button>
                       </div>

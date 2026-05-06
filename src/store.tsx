@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, CartItem, Lang, Order } from './types';
 import translations from './i18n';
-import { getProducts, saveProducts, getOrders, saveOrders, getCoupons } from './data';
+import { getProducts, getOrders, getCoupons } from './data';
 import toast from 'react-hot-toast';
+import { db } from './firebase';
+import { collection, onSnapshot, addDoc, updateDoc, doc, setDoc, query, orderBy } from 'firebase/firestore';
 
 interface StoreContextType {
   lang: Lang;
@@ -13,9 +15,9 @@ interface StoreContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   cart: CartItem[];
-  addToCart: (p: Product, qty?: number) => void;
-  removeFromCart: (id: string) => void;
-  updateCartQty: (id: string, qty: number) => void;
+  addToCart: (p: Product, qty?: number, color?: string) => void;
+  removeFromCart: (id: string, color?: string) => void;
+  updateCartQty: (id: string, qty: number, color?: string) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -48,7 +50,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('vantage_dark') === 'true';
   });
-  const [products, setProducts] = useState<Product[]>(() => getProducts());
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>(() => {
     const stored = localStorage.getItem('vantage_cart');
     return stored ? JSON.parse(stored) : [];
@@ -57,26 +59,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('vantage_wishlist');
     return stored ? JSON.parse(stored) : [];
   });
-  const [orders, setOrders] = useState<Order[]>(() => getOrders());
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isAdmin, setIsAdmin] = useState(() => {
     return sessionStorage.getItem('vantage_admin') === 'true';
   });
 
+  // Sync Products from Firestore
   useEffect(() => {
-    saveProducts(products);
-  }, [products]);
+    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setProducts(items);
+    });
+    return unsub;
+  }, []);
 
+  // Sync Orders from Firestore
   useEffect(() => {
-    localStorage.setItem('vantage_cart', JSON.stringify(cart));
-  }, [cart]);
+    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+      setOrders(items);
+    });
+    return unsub;
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('vantage_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  useEffect(() => {
-    saveOrders(orders);
-  }, [orders]);
 
   useEffect(() => {
     localStorage.setItem('vantage_dark', String(dark));
@@ -115,30 +122,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const toggleDark = () => setDark(d => !d);
 
-  const addToCart = (p: Product, qty = 1) => {
+  const addToCart = (p: Product, qty = 1, color?: string) => {
     setCart(prev => {
-      const existing = prev.find(item => item.product.id === p.id);
+      const existing = prev.find(item => item.product.id === p.id && item.selectedColor === color);
       if (existing) {
         return prev.map(item =>
-          item.product.id === p.id
+          (item.product.id === p.id && item.selectedColor === color)
             ? { ...item, quantity: Math.min(item.quantity + qty, p.stock) }
             : item
         );
       }
-      return [...prev, { product: p, quantity: qty }];
+      return [...prev, { product: p, quantity: qty, selectedColor: color }];
     });
     toast.success(t('itemAdded'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B', border: '1px solid #D4AF37' } });
   };
 
-  const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== id));
+  const removeFromCart = (id: string, color?: string) => {
+    setCart(prev => prev.filter(item => !(item.product.id === id && item.selectedColor === color)));
     toast.success(t('itemRemoved'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B' } });
   };
 
-  const updateCartQty = (id: string, qty: number) => {
-    if (qty < 1) return removeFromCart(id);
+  const updateCartQty = (id: string, qty: number, color?: string) => {
+    if (qty < 1) return removeFromCart(id, color);
     setCart(prev => prev.map(item =>
-      item.product.id === id ? { ...item, quantity: qty } : item
+      (item.product.id === id && item.selectedColor === color) ? { ...item, quantity: qty } : item
     ));
   };
 
@@ -160,12 +167,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const isInWishlist = (id: string) => wishlist.includes(id);
 
-  const addOrder = (order: Order) => {
-    setOrders(prev => [order, ...prev]);
+  const addOrder = async (order: Order) => {
+    try {
+      await setDoc(doc(db, 'orders', order.id), order);
+    } catch (error) {
+      console.error("Error adding order: ", error);
+      toast.error("Failed to save order to server");
+    }
   };
 
-  const updateOrderStatus = (id: string, status: Order['status']) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  const updateOrderStatus = async (id: string, status: Order['status']) => {
+    try {
+      await updateDoc(doc(db, 'orders', id), { status });
+    } catch (error) {
+      console.error("Error updating order: ", error);
+    }
   };
 
   const adminLogin = (user: string, pass: string): boolean => {

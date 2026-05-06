@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [zoomed, setZoomed] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || '');
 
   if (!product) {
     return (
@@ -31,7 +32,7 @@ export default function ProductDetail() {
   const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
+    addToCart(product, quantity, selectedColor);
     navigate('/checkout');
   };
 
@@ -167,6 +168,29 @@ export default function ProductDetail() {
               )}
             </div>
 
+            {/* Colors */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-8">
+                <span className={`block font-medium mb-3 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {lang === 'ar' ? 'اختر اللون' : 'Select Color'}:
+                </span>
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all transform hover:scale-110 flex items-center justify-center ${selectedColor === color ? 'border-gold' : 'border-transparent shadow-sm'}`}
+                      style={{ background: color }}
+                    >
+                      {selectedColor === color && (
+                        <Check size={16} className={color.toLowerCase() === '#ffffff' ? 'text-black' : 'text-white'} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quantity */}
             <div className="flex items-center gap-4 mb-8">
               <span className={`font-medium ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{t('quantity')}:</span>
@@ -184,7 +208,7 @@ export default function ProductDetail() {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
               <button
-                onClick={() => addToCart(product, quantity)}
+                onClick={() => addToCart(product, quantity, selectedColor)}
                 disabled={product.stock === 0}
                 className="flex-1 flex items-center justify-center gap-2 bg-gold hover:bg-gold-light text-black-main py-4 rounded-xl font-bold transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >

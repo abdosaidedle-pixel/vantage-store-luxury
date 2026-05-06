@@ -58,9 +58,8 @@ export default function Home() {
   const newArrivals = products.slice(0, 4);
 
   const faqs = [
-    { q: lang === 'en' ? 'How do I track my order?' : 'كيف أتابع طلبي؟', a: lang === 'en' ? 'You can track your order in your account dashboard' : 'يمكنك متابعة طلبك من لوحة التحكم' },
-    { q: lang === 'en' ? 'What\'s your return policy?' : 'ما هي سياسة الإرجاع؟', a: lang === 'en' ? '30 days money back guarantee on all items' : 'ضمان استرجاع الأموال لمدة 30 يوم' },
-    { q: lang === 'en' ? 'Do you offer international shipping?' : 'هل تقدمون الشحن الدولي؟', a: lang === 'en' ? 'Yes, we ship to over 150 countries' : 'نعم، نشحن إلى أكثر من 150 دولة' }
+    { q: lang === 'en' ? 'How do I track my order?' : 'كيف أتابع طلبي؟', a: lang === 'en' ? 'You can track your order via WhatsApp updates after placing it.' : 'يمكنك متابعة طلبك عبر تحديثات الواتساب بعد إتمامه.' },
+    { q: lang === 'en' ? 'What\'s your return policy?' : 'ما هي سياسة الإرجاع؟', a: lang === 'en' ? '14 days return policy on all unused items' : 'سياسة إرجاع لمدة 14 يوماً على جميع المنتجات غير المستخدمة' }
   ];
 
   return (
@@ -118,7 +117,7 @@ export default function Home() {
           {[
             { icon: <Truck className="text-gold" size={28} />, title: lang === 'en' ? 'Free Shipping' : 'شحن مجاني', desc: lang === 'en' ? 'Over 500 EGP' : 'للطلبات فوق 500 ج.م' },
             { icon: <Shield className="text-gold" size={28} />, title: lang === 'en' ? 'Secure Payment' : 'دفع آمن', desc: lang === 'en' ? 'Protected checkout' : 'عمليات دفع محمية' },
-            { icon: <Clock className="text-gold" size={28} />, title: lang === 'en' ? 'Fast Delivery' : 'توصيل سريع', desc: lang === 'en' ? 'In 24-48 hours' : 'خلال 24-48 ساعة' },
+            { icon: <Clock className="text-gold" size={28} />, title: lang === 'en' ? 'Fast Delivery' : 'توصيل سريع', desc: lang === 'en' ? 'In 1-5 business days' : 'خلال 1-5 أيام عمل' },
             { icon: <Zap className="text-gold" size={28} />, title: lang === 'en' ? 'Premium Quality' : 'جودة فائقة', desc: lang === 'en' ? 'Luxury products' : 'منتجات فاخرة مختارة' }
           ].map((f, i) => (
             <motion.div key={i} variants={fadeUp} className={`p-8 rounded-3xl text-center transition-all hover:scale-105 ${dark ? 'bg-dark-card border border-dark-border hover:border-gold/30' : 'bg-white border border-gray-100 shadow-xl shadow-black/5 hover:border-gold/30'}`}>

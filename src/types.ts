@@ -14,12 +14,14 @@ export interface Product {
   reviews: number;
   badge?: 'new' | 'sale' | 'bestseller' | 'limited';
   featured?: boolean;
+  colors?: string[];
   createdAt: string;
 }
 
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedColor?: string;
 }
 
 export interface Order {

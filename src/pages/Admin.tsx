@@ -6,23 +6,66 @@ import { Product, Order } from '../types';
 import { CATEGORIES } from '../data';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import toast from 'react-hot-toast';
+import { db, storage } from '../firebase';
+import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import emailjs from '@emailjs/browser';
 
 export default function Admin() {
   const { t, lang, dark, isAdmin, adminLogin, adminLogout, products, setProducts, orders, updateOrderStatus } = useStore();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [loginStep, setLoginStep] = useState<'login' | 'otp'>('login');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = adminLogin(username, password);
-    if (success) {
+    if (email.toLowerCase() !== 'kareemshapaan888@gmail.com') {
+      toast.error(lang === 'ar' ? 'هذا الإيميل ليس له صلاحيات المسؤول' : 'This email does not have admin privileges');
+      return;
+    }
+
+    setLoading(true);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setOtpCode(code);
+
+    try {
+      // Note: Admin needs to set up EmailJS Service, Template, and Public Key
+      await emailjs.send(
+        'service_vantage', 
+        'template_vantage_otp', 
+        {
+          to_email: email,
+          otp_code: code,
+        },
+        'YOUR_PUBLIC_KEY'
+      );
+      
+      setLoginStep('otp');
+      toast.success(lang === 'ar' ? 'تم إرسال كود التحقق لجيميلك' : 'Verification code sent to your Gmail');
+    } catch (error) {
+      console.error("EmailJS Error:", error);
+      toast.error("Failed to send email. Check console for development code.");
+      console.log("DEVELOPMENT OTP CODE:", code);
+      setLoginStep('otp');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpInput === otpCode) {
+      // Log in with fixed admin credentials internally to grant access
+      adminLogin('admin', 'admin123');
       toast.success(t('welcomeBack'));
     } else {
-      toast.error(t('loginFailed'));
+      toast.error(lang === 'ar' ? 'كود غير صحيح' : 'Invalid code');
     }
   };
 
@@ -38,35 +81,61 @@ export default function Admin() {
             <div className="w-16 h-16 bg-gold/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Lock size={28} className="text-gold" />
             </div>
-            <h2 className={`text-2xl font-bold ${dark ? 'text-white' : 'text-black-main'}`}>{t('adminLogin')}</h2>
+            <h2 className={`text-2xl font-bold ${dark ? 'text-white' : 'text-black-main'}`}>
+              {loginStep === 'login' ? (lang === 'ar' ? 'دخول المسؤول' : 'Admin Login') : (lang === 'ar' ? 'تحقق من الهوية' : 'Identity Verification')}
+            </h2>
+            {loginStep === 'otp' && (
+              <p className={`text-sm mt-2 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {lang === 'ar' ? 'تم إرسال الكود إلى ' : 'Code sent to '} {email}
+              </p>
+            )}
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{t('adminUsername')}</label>
-              <input
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="admin"
-                className={`w-full px-4 py-3 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white' : 'bg-soft-gray border-gray-200 text-black-main'}`}
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>{t('password')}</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className={`w-full px-4 py-3 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white' : 'bg-soft-gray border-gray-200 text-black-main'}`}
-              />
-            </div>
-            <button type="submit" className="w-full bg-gold hover:bg-gold-light text-black-main py-3.5 rounded-xl font-bold transition-all hover:scale-[1.02]">
-              {t('login')}
-            </button>
-            <p className={`text-xs text-center ${dark ? 'text-gray-600' : 'text-gray-400'}`}>
-              Demo: admin / admin123
-            </p>
-          </form>
+
+          {loginStep === 'login' ? (
+            <form onSubmit={handleSendOTP} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="kareemshapaan888@gmail.com"
+                  className={`w-full px-4 py-3 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white' : 'bg-soft-gray border-gray-200 text-black-main'}`}
+                  required
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-gold hover:bg-gold-light text-black-main py-3.5 rounded-xl font-bold transition-all hover:scale-[1.02] disabled:opacity-50"
+              >
+                {loading ? '...' : (lang === 'ar' ? 'إرسال كود الدخول' : 'Send Access Code')}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1.5 ${dark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {lang === 'ar' ? 'كود التحقق' : 'Verification Code'}
+                </label>
+                <input
+                  value={otpInput}
+                  onChange={e => setOtpInput(e.target.value)}
+                  placeholder="000000"
+                  className="w-full px-4 py-3 rounded-xl border text-center text-2xl tracking-[1em] font-bold bg-soft-gray dark:bg-black-main dark:border-dark-border text-gold"
+                  maxLength={6}
+                />
+              </div>
+              <button type="submit" className="w-full bg-gold hover:bg-gold-light text-black-main py-3.5 rounded-xl font-bold transition-all hover:scale-[1.02]">
+                {lang === 'ar' ? 'تأكيد الدخول' : 'Confirm Login'}
+              </button>
+              <button type="button" onClick={() => setLoginStep('login')} className="w-full text-sm text-gray-500 hover:text-gold mt-2">
+                {lang === 'ar' ? 'الرجوع للخلف' : 'Go Back'}
+              </button>
+            </form>
+          )}
         </motion.div>
       </div>
     );
@@ -223,13 +292,15 @@ export default function Admin() {
                             <button onClick={() => { setEditingProduct(product); setShowAddProduct(true); }} className="p-2 hover:bg-gold/10 rounded-lg text-gold transition-colors">
                               <Edit size={16} />
                             </button>
-                            <button onClick={() => {
+                            <button onClick={async () => {
                               if (window.confirm(t('confirm'))) {
-                                setProducts(prev => {
-                                  const updated = prev.filter(p => p.id !== product.id);
-                                  return updated;
-                                });
-                                toast.success(t('productDeleted'));
+                                try {
+                                  await deleteDoc(doc(db, 'products', product.id));
+                                  toast.success(t('productDeleted'));
+                                } catch (error) {
+                                  console.error("Delete error:", error);
+                                  toast.error("Failed to delete product");
+                                }
                               }
                             }} className="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors">
                               <Trash2 size={16} />
@@ -349,16 +420,18 @@ export default function Admin() {
         <ProductModal
           product={editingProduct}
           onClose={() => { setShowAddProduct(false); setEditingProduct(null); }}
-          onSave={(product) => {
-            if (editingProduct) {
-              setProducts(prev => prev.map(p => p.id === product.id ? product : p));
-              toast.success(t('productUpdated'));
-            } else {
-              setProducts(prev => [...prev, { ...product, id: `p${Date.now()}`, createdAt: new Date().toISOString() }]);
-              toast.success(t('productAdded'));
+          onSave={async (p) => {
+            try {
+              const productId = p.id || `p${Date.now()}`;
+              const productData = { ...p, id: productId, createdAt: p.createdAt || new Date().toISOString() };
+              await setDoc(doc(db, 'products', productId), productData);
+              toast.success(p.id ? t('productUpdated') : t('productAdded'));
+              setShowAddProduct(false);
+              setEditingProduct(null);
+            } catch (error) {
+              console.error("Save error:", error);
+              toast.error("Failed to save product");
             }
-            setShowAddProduct(false);
-            setEditingProduct(null);
           }}
           t={t}
           lang={lang}
@@ -461,15 +534,37 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
     createdAt: '',
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [newColor, setNewColor] = useState('#D4AF37');
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm(f => ({ ...f, images: [reader.result as string, ...f.images.slice(1)] }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setForm(f => ({ ...f, images: [url, ...f.images.slice(1)] }));
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const addColor = () => {
+    if (!form.colors) form.colors = [];
+    if (!form.colors.includes(newColor)) {
+      setForm(f => ({ ...f, colors: [...(f.colors || []), newColor] }));
+    }
+  };
+
+  const removeColor = (color: string) => {
+    setForm(f => ({ ...f, colors: (f.colors || []).filter(c => c !== color) }));
   };
 
   const inputClass = `w-full px-4 py-2.5 rounded-xl border text-sm ${dark ? 'bg-black-main border-dark-border text-white focus:border-gold/50' : 'bg-soft-gray border-gray-200 text-black-main focus:border-gold'} outline-none transition-all`;
@@ -547,12 +642,49 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
               </select>
             </div>
           </div>
+
+          {/* Color Selection */}
+          <div>
+            <label className={`block text-xs font-medium mb-2 ${dark ? 'text-gray-400' : 'text-gray-600'}`}>
+              {lang === 'ar' ? 'ألوان المنتج' : 'Product Colors'}
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(form.colors || []).map(color => (
+                <div key={color} className="relative group">
+                  <div className="w-8 h-8 rounded-full border border-gray-300" style={{ background: color }} />
+                  <button 
+                    onClick={() => removeColor(color)}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 ml-2">
+                <input 
+                  type="color" 
+                  value={newColor} 
+                  onChange={e => setNewColor(e.target.value)}
+                  className="w-8 h-8 rounded-full cursor-pointer border-none bg-transparent"
+                />
+                <button 
+                  onClick={addColor}
+                  className={`p-1.5 rounded-lg border ${dark ? 'border-dark-border text-gold' : 'border-gray-200 text-gold'} hover:bg-gold/10 transition-colors`}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className={`block text-xs font-medium mb-1 ${dark ? 'text-gray-400' : 'text-gray-600'}`}>{lang === 'ar' ? 'صور المنتج' : 'Product Images'}</label>
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <div className={`w-16 h-16 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden ${dark ? 'border-dark-border' : 'border-gray-200'}`}>
-                  {form.images[0] ? (
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-gold border-t-transparent" />
+                  ) : form.images[0] ? (
                     <img src={form.images[0]} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <Plus size={20} className="text-gray-400" />
@@ -565,12 +697,13 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
+                    disabled={isUploading}
                   />
                   <label
                     htmlFor="image-upload"
-                    className={`inline-block px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${dark ? 'bg-gold text-black-main hover:bg-gold-light' : 'bg-black-main text-white hover:bg-black/80'}`}
+                    className={`inline-block px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : dark ? 'bg-gold text-black-main hover:bg-gold-light' : 'bg-black-main text-white hover:bg-black/80'}`}
                   >
-                    {lang === 'ar' ? 'رفع صورة من الجهاز' : 'Upload from Device'}
+                    {isUploading ? (lang === 'ar' ? 'جاري الرفع...' : 'Uploading...') : (lang === 'ar' ? 'رفع صورة من الجهاز' : 'Upload from Device')}
                   </label>
                   <p className={`text-[10px] mt-1 ${dark ? 'text-gray-500' : 'text-gray-400'}`}>
                     {lang === 'ar' ? 'أو أدخل رابط الصورة بالأسفل' : 'Or enter image URL below'}
