@@ -2,6 +2,7 @@ import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { StoreProvider } from './store';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
+        <Footer />
       </Router>
     </StoreProvider>
   );
