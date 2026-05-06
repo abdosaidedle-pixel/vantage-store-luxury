@@ -1,0 +1,213 @@
+@import "tailwindcss";
+
+@theme {
+  --color-black-main: #0B0B0B;
+  --color-gold: #D4AF37;
+  --color-gold-light: #E8C84A;
+  --color-gold-dark: #B8961F;
+  --color-soft-gray: #F5F5F5;
+  --color-dark-bg: #111111;
+  --color-dark-card: #1A1A1A;
+  --color-dark-border: #2A2A2A;
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Playfair Display', serif;
+  --font-arabic: 'Cairo', sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D4AF37 transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+/* Mobile responsive font sizes */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.125rem; }
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.rtl {
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+}
+
+body.dark {
+  background-color: #0B0B0B;
+  color: #FFFFFF;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #D4AF37 100%);
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #E8C84A 50%, #B8961F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.premium-shadow {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.dark .premium-shadow {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+.animate-slide-left { animation: slideInLeft 0.5s ease-out; }
+.animate-slide-right { animation: slideInRight 0.5s ease-out; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: #D4AF37; 
+  border-radius: 4px; 
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover { background: #E8C84A; }
+
+/* Grid responsive layouts */
+.products-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+@media (max-width: 1024px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.875rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* Button styles with hover effects */
+button {
+  cursor: pointer;
+  user-select: none;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Better spacing for mobile */
+@media (max-width: 768px) {
+  main { padding: 0 0.5rem; }
+  .max-w-7xl { padding-left: 0.5rem; padding-right: 0.5rem; }
+}
+
+/* Image optimization */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Text selection color */
+::selection {
+  background-color: #D4AF37;
+  color: #0B0B0B;
+}
+
+.dark ::selection {
+  background-color: #E8C84A;
+  color: #FFFFFF;
+}
+
+/* Responsive text */
+@media (max-width: 640px) {
+  h1 { line-height: 1.2; }
+  p { font-size: 0.95rem; }
+}
