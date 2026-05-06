@@ -254,10 +254,12 @@ ${paymentMethod === 'vodafone_cash' ? `📋 *${t('paymentRef')}:* ${paymentRef}`
 
                 <button
                   type="submit"
-                  className="w-full mt-6 flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-bold transition-all hover:scale-[1.02] text-base"
+                  className="w-full mt-6 flex items-center justify-center gap-3 bg-black-main hover:bg-black-main/90 text-white py-4 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-xl border border-gold/30 group"
                 >
-                  <MessageCircle size={22} />
-                  {t('orderViaWhatsApp')}
+                  <div className="bg-emerald-500 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+                    <MessageCircle size={20} className="text-white" />
+                  </div>
+                  <span className="text-gold tracking-wide">{t('orderViaWhatsApp')}</span>
                 </button>
               </div>
             </div>

@@ -1,17 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-black-main: #0B0B0B;
   --color-gold: #D4AF37;
-  --color-gold-light: #E8C84A;
-  --color-gold-dark: #B8961F;
-  --color-soft-gray: #F5F5F5;
-  --color-dark-bg: #111111;
-  --color-dark-card: #1A1A1A;
-  --color-dark-border: #2A2A2A;
-  --font-sans: 'Inter', sans-serif;
+  --color-gold-light: #F1D592;
+  --color-gold-dark: #AA8B24;
+  --color-black-main: #0B0B0B;
+  --color-dark-card: #141414;
+  --color-dark-border: #242424;
+  --color-soft-gray: #F8F8F8;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Playfair Display', serif;
   --font-arabic: 'Cairo', sans-serif;
+}
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
 }
 
 * {

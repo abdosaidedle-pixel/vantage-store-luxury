@@ -72,16 +72,29 @@ export default function Home() {
             key={i}
             initial={{ opacity: 0 }}
             animate={{ opacity: i === currentSlide ? 1 : 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/40" />
-            <motion.div className="absolute inset-0 flex items-center justify-center text-center text-white px-4" initial={{ opacity: 0, y: 20 }} animate={i === currentSlide ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.2 }}>
-              <div>
-                <h1 className="text-4xl md:text-6xl font-bold mb-4" style={{ fontFamily: lang === 'ar' ? "'Cairo'" : "'Playfair Display'" }}>{slide.title}</h1>
-                <p className="text-lg md:text-2xl mb-8">{slide.sub}</p>
-                <Link to="/products" className="inline-block bg-gold hover:bg-gold-light text-black-main font-bold py-3 px-8 rounded-xl transition-all hover:scale-110">{t('shop')}</Link>
+            <img src={slide.img} alt={slide.title} className="w-full h-full object-cover hero-image-mobile" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black-main/80 via-black-main/20 to-transparent" />
+            <motion.div 
+              className="absolute inset-0 flex items-center justify-center text-center text-white px-6" 
+              initial={{ opacity: 0, y: 30 }} 
+              animate={i === currentSlide ? { opacity: 1, y: 0 } : {}} 
+              transition={{ delay: 0.3, duration: 0.8 }}
+            >
+              <div className="max-w-3xl">
+                <motion.h1 
+                  className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight leading-tight" 
+                  style={{ fontFamily: lang === 'ar' ? "'Cairo'" : "'Playfair Display'" }}
+                >
+                  {slide.title}
+                </motion.h1>
+                <motion.p className="text-base md:text-xl lg:text-2xl mb-10 text-gray-200 font-light max-w-2xl mx-auto">{slide.sub}</motion.p>
+                <Link to="/products" className="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-black-main font-bold py-4 px-10 rounded-2xl transition-all hover:scale-110 shadow-2xl shadow-gold/20">
+                  {t('shopNow')}
+                  <Arrow size={20} />
+                </Link>
               </div>
             </motion.div>
           </motion.div>
@@ -101,17 +114,17 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
         {/* Features Bar */}
-        <motion.div initial="hidden" whileInView="visible" variants={stagger} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+        <motion.div initial="hidden" whileInView="visible" variants={stagger} viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
           {[
-            { icon: <Truck className="text-gold" size={32} />, title: lang === 'en' ? 'Free Shipping' : 'شحن مجاني', desc: lang === 'en' ? 'On orders over $50' : 'للطلبيات فوق 50 دولار' },
-            { icon: <Shield className="text-gold" size={32} />, title: lang === 'en' ? 'Secure Payment' : 'دفع آمن', desc: lang === 'en' ? '100% protected transactions' : 'معاملات محمية 100%' },
-            { icon: <Clock className="text-gold" size={32} />, title: lang === 'en' ? 'Fast Delivery' : 'توصيل سريع', desc: lang === 'en' ? '2-5 business days' : 'في 2-5 أيام عمل' },
-            { icon: <Zap className="text-gold" size={32} />, title: lang === 'en' ? 'Best Prices' : 'أفضل الأسعار', desc: lang === 'en' ? 'Price match guarantee' : 'ضمان مطابقة الأسعار' }
+            { icon: <Truck className="text-gold" size={28} />, title: lang === 'en' ? 'Free Shipping' : 'شحن مجاني', desc: lang === 'en' ? 'Over 500 EGP' : 'للطلبات فوق 500 ج.م' },
+            { icon: <Shield className="text-gold" size={28} />, title: lang === 'en' ? 'Secure Payment' : 'دفع آمن', desc: lang === 'en' ? 'Protected checkout' : 'عمليات دفع محمية' },
+            { icon: <Clock className="text-gold" size={28} />, title: lang === 'en' ? 'Fast Delivery' : 'توصيل سريع', desc: lang === 'en' ? 'In 24-48 hours' : 'خلال 24-48 ساعة' },
+            { icon: <Zap className="text-gold" size={28} />, title: lang === 'en' ? 'Premium Quality' : 'جودة فائقة', desc: lang === 'en' ? 'Luxury products' : 'منتجات فاخرة مختارة' }
           ].map((f, i) => (
-            <motion.div key={i} variants={fadeUp} className={`p-6 rounded-2xl text-center ${dark ? 'bg-dark-card border border-dark-border' : 'bg-soft-gray'}`}>
-              <div className="flex justify-center mb-3">{f.icon}</div>
-              <h3 className={`font-bold mb-1 ${dark ? 'text-white' : 'text-black-main'}`}>{f.title}</h3>
-              <p className={`text-sm ${dark ? 'text-gray-400' : 'text-gray-600'}`}>{f.desc}</p>
+            <motion.div key={i} variants={fadeUp} className={`p-8 rounded-3xl text-center transition-all hover:scale-105 ${dark ? 'bg-dark-card border border-dark-border hover:border-gold/30' : 'bg-white border border-gray-100 shadow-xl shadow-black/5 hover:border-gold/30'}`}>
+              <div className="flex justify-center mb-4 p-4 bg-gold/10 w-16 h-16 rounded-2xl mx-auto luxury-transition">{f.icon}</div>
+              <h3 className={`font-bold mb-2 text-base ${dark ? 'text-white' : 'text-black-main'}`}>{f.title}</h3>
+              <p className={`text-xs leading-relaxed ${dark ? 'text-gray-500' : 'text-gray-500'}`}>{f.desc}</p>
             </motion.div>
           ))}
         </motion.div>

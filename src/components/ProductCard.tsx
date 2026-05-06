@@ -37,51 +37,47 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {/* Badge */}
         {product.badge && (
-          <span className={`absolute top-3 ${lang === 'ar' ? 'right-3' : 'left-3'} px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${badgeColors[product.badge]} transform transition-all duration-300`}>
+          <span className={`absolute top-4 ${lang === 'ar' ? 'right-4' : 'left-4'} px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${badgeColors[product.badge]} z-10`}>
             {badgeLabels[product.badge]}
           </span>
         )}
 
         {/* Discount */}
         {product.discount && product.discount > 0 && (
-          <span className={`absolute top-3 ${lang === 'ar' ? 'left-3' : 'right-3'} bg-red-500 text-white px-2.5 py-1.5 rounded-full text-[11px] font-bold shadow-lg transform transition-all duration-300 hover:scale-110`}>
+          <span className={`absolute top-4 ${lang === 'ar' ? 'left-4' : 'right-4'} bg-black-main text-gold px-2 py-1 rounded-lg text-[10px] font-bold z-10 border border-gold/30`}>
             -{product.discount}%
           </span>
         )}
 
         {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
-          <div className="flex gap-2.5 scale-75 group-hover:scale-100 transition-transform duration-300">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                addToCart(product);
-              }}
-              className="p-3 bg-gold hover:bg-gold-light text-black-main rounded-full transition-all hover:scale-110 shadow-lg hover:shadow-2xl transform active:scale-95"
-              title={t('addToCart')}
-              aria-label={t('addToCart')}
-            >
-              <ShoppingBag size={18} />
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                toggleWishlist(product.id);
-              }}
-              className={`p-3 rounded-full transition-all hover:scale-110 shadow-lg hover:shadow-2xl transform active:scale-95 ${inWish ? 'bg-red-500 text-white' : 'bg-white text-black-main hover:bg-gray-100'}`}
-              title={t('wishlist')}
-              aria-label={t('wishlist')}
-            >
-              <Heart size={18} fill={inWish ? 'currentColor' : 'none'} />
-            </button>
-            <Link
-              to={`/product/${product.id}`}
-              className="p-3 bg-white hover:bg-gray-100 text-black-main rounded-full transition-all hover:scale-110 shadow-lg hover:shadow-2xl transform active:scale-95"
-              title={t('quickView')}
-            >
-              <Eye size={18} />
-            </Link>
-          </div>
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-all duration-500 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 backdrop-blur-[2px]">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              addToCart(product);
+            }}
+            className="p-3.5 bg-white hover:bg-gold text-black-main rounded-2xl transition-all hover:scale-110 shadow-xl active:scale-95 luxury-transition"
+            title={t('addToCart')}
+          >
+            <ShoppingBag size={20} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product.id);
+            }}
+            className={`p-3.5 rounded-2xl transition-all hover:scale-110 shadow-xl active:scale-95 luxury-transition ${inWish ? 'bg-gold text-black-main' : 'bg-white text-black-main hover:bg-gray-100'}`}
+            title={t('wishlist')}
+          >
+            <Heart size={20} fill={inWish ? 'currentColor' : 'none'} className={inWish ? 'text-black-main' : 'text-black-main'} />
+          </button>
+          <Link
+            to={`/product/${product.id}`}
+            className="p-3.5 bg-white hover:bg-gray-100 text-black-main rounded-2xl transition-all hover:scale-110 shadow-xl active:scale-95 luxury-transition"
+            title={t('quickView')}
+          >
+            <Eye size={20} />
+          </Link>
         </div>
       </div>
 
