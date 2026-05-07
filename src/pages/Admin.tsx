@@ -585,15 +585,22 @@ function ProductModal({ product, onClose, onSave, t, lang, dark }: {
 
     try {
       setIsUploading(true);
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setForm(f => ({ ...f, images: [url, ...f.images.slice(1)] }));
-      toast.success("Image uploaded successfully");
+      // Convert to Base64 instead of Firebase to work without backend
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setForm(f => ({ ...f, images: [base64String, ...f.images.slice(1)] }));
+        toast.success(lang === 'ar' ? 'تم تحميل الصورة' : 'Image uploaded successfully');
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        toast.error('Failed to read file');
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload image");
-    } finally {
       setIsUploading(false);
     }
   };
