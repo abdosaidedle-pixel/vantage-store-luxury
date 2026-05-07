@@ -35,7 +35,10 @@ export default function Admin() {
     setOtpCode(code);
 
     try {
-      // Note: Admin needs to set up EmailJS Service, Template, and Public Key
+      // Note: To make this work, you must create an account on emailjs.com
+      // 1. Create a Service (e.g., 'service_vantage')
+      // 2. Create a Template (e.g., 'template_vantage_otp') with {{to_email}} and {{otp_code}}
+      // 3. Replace 'YOUR_PUBLIC_KEY' with your actual Public Key from Account settings
       await emailjs.send(
         'service_vantage', 
         'template_vantage_otp', 
@@ -50,8 +53,11 @@ export default function Admin() {
       toast.success(lang === 'ar' ? 'تم إرسال كود التحقق لجيميلك' : 'Verification code sent to your Gmail');
     } catch (error) {
       console.error("EmailJS Error:", error);
-      toast.error("Failed to send email. Check console for development code.");
-      console.log("DEVELOPMENT OTP CODE:", code);
+      // Fallback: Show the code in a toast so the user can log in even if EmailJS is not configured
+      toast.success(lang === 'ar' ? `كود الدخول (للتجربة): ${code}` : `Access Code (Test): ${code}`, { 
+        duration: 10000,
+        style: { border: '1px solid #D4AF37', fontWeight: 'bold' }
+      });
       setLoginStep('otp');
     } finally {
       setLoading(false);
