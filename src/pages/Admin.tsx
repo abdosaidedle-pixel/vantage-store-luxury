@@ -6,13 +6,9 @@ import { Product, Order } from '../types';
 import { CATEGORIES } from '../data';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import toast from 'react-hot-toast';
-import { db, storage } from '../firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import emailjs from '@emailjs/browser';
 
 export default function Admin() {
-  const { t, lang, dark, isAdmin, adminLogin, adminLogout, products, setProducts, orders, updateOrderStatus } = useStore();
+  const { t, lang, dark, isAdmin, adminLogin, adminLogout, products, setProducts, orders, updateOrderStatus, syncDb } = useStore();
   const [email, setEmail] = useState('');
   const [loginStep, setLoginStep] = useState<'login' | 'otp'>('login');
   const [otpCode, setOtpCode] = useState('');
@@ -307,18 +303,12 @@ export default function Admin() {
                             <button onClick={async () => {
                               if (window.confirm(t('confirm'))) {
                                 try {
-                                  // Update LocalStorage fallback first
-                                  const localProductsStr = localStorage.getItem('vantage_products');
-                                  let localProducts = localProductsStr ? JSON.parse(localProductsStr) : [];
+                                  let localProducts = [...products];
                                   localProducts = localProducts.filter((pr: any) => pr.id !== product.id);
                                   localStorage.setItem('vantage_products', JSON.stringify(localProducts));
                                   setProducts(localProducts);
 
-                                  try {
-                                    await deleteDoc(doc(db, 'products', product.id));
-                                  } catch (e) {
-                                    console.warn("Could not delete from Firebase. Deleted locally.", e);
-                                  }
+                                  await syncDb(localProducts, undefined);
                                   
                                   toast.success(t('productDeleted'));
                                 } catch (error) {
@@ -449,9 +439,7 @@ export default function Admin() {
               const productId = p.id || `p${Date.now()}`;
               const productData = { ...p, id: productId, createdAt: p.createdAt || new Date().toISOString() };
               
-              // Fallback: update local storage and state FIRST
-              const localProductsStr = localStorage.getItem('vantage_products');
-              let localProducts = localProductsStr ? JSON.parse(localProductsStr) : [];
+              let localProducts = [...products];
               const existingIdx = localProducts.findIndex((pr: any) => pr.id === productId);
               if (existingIdx > -1) {
                 localProducts[existingIdx] = productData;
@@ -461,11 +449,7 @@ export default function Admin() {
               localStorage.setItem('vantage_products', JSON.stringify(localProducts));
               setProducts(localProducts);
 
-              try {
-                await setDoc(doc(db, 'products', productId), productData);
-              } catch (e) {
-                console.warn("Could not save to Firebase. Saved locally.", e);
-              }
+              await syncDb(localProducts, undefined);
 
               toast.success(p.id ? t('productUpdated') : t('productAdded'));
               setShowAddProduct(false);

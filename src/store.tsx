@@ -3,8 +3,8 @@ import { Product, CartItem, Lang, Order } from './types';
 import translations from './i18n';
 import { getProducts, getOrders, getCoupons } from './data';
 import toast from 'react-hot-toast';
-import { db } from './firebase';
-import { collection, onSnapshot, addDoc, updateDoc, doc, setDoc, query, orderBy } from 'firebase/firestore';
+
+const DB_URL = "https://extendsclass.com/api/json-storage/bin/fcededc";
 
 interface StoreContextType {
   lang: Lang;
@@ -31,6 +31,7 @@ interface StoreContextType {
   adminLogin: (user: string, pass: string) => boolean;
   adminLogout: () => void;
   applyCoupon: (code: string) => { valid: boolean; discount: number; type: string };
+  syncDb: (newProducts?: Product[], newOrders?: Order[]) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -41,8 +42,6 @@ export function useStore() {
   return ctx;
 }
 
-// Admin credentials validated at login time
-
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     return (localStorage.getItem('vantage_lang') as Lang) || 'en';
@@ -50,7 +49,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('vantage_dark') === 'true';
   });
-  // Initialize products from LocalStorage to prevent them from disappearing before Firebase loads
+  
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = localStorage.getItem('vantage_products');
     return stored ? JSON.parse(stored) : [];
@@ -72,44 +71,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return sessionStorage.getItem('vantage_admin') === 'true';
   });
 
-  // Sync Products from Firestore
-  useEffect(() => {
+  const syncDb = async (newProducts?: Product[], newOrders?: Order[]) => {
     try {
-      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-          setProducts(items);
-          localStorage.setItem('vantage_products', JSON.stringify(items));
-        }
-      }, (error) => {
-        console.error("Firebase fetch error:", error);
+      const payload = {
+        products: newProducts || products,
+        orders: newOrders || orders
+      };
+      await fetch(DB_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      return unsub;
-    } catch (err) {
-      console.error("Firebase init error:", err);
+    } catch (e) {
+      console.error("DB Sync Error", e);
     }
-  }, []);
+  };
 
-  // Sync Orders from Firestore
+  // Sync from DB on mount
   useEffect(() => {
-    try {
-      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-          setOrders(items);
-          localStorage.setItem('vantage_orders', JSON.stringify(items));
+    fetch(DB_URL)
+      .then(r => r.json())
+      .then(data => {
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+          localStorage.setItem('vantage_products', JSON.stringify(data.products));
         }
-      }, (error) => {
-        console.error("Firebase fetch error:", error);
-      });
-      return unsub;
-    } catch (err) {
-      console.error("Firebase init error:", err);
-    }
+        if (data.orders && Array.isArray(data.orders) && data.orders.length > 0) {
+          setOrders(data.orders);
+          localStorage.setItem('vantage_orders', JSON.stringify(data.orders));
+        }
+      })
+      .catch(e => console.error("DB Fetch Error:", e));
   }, []);
-
 
   useEffect(() => {
     localStorage.setItem('vantage_dark', String(dark));
@@ -151,43 +144,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addToCart = (p: Product, qty = 1, color?: string) => {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === p.id && item.selectedColor === color);
+      let updatedCart;
       if (existing) {
-        return prev.map(item =>
+        updatedCart = prev.map(item =>
           (item.product.id === p.id && item.selectedColor === color)
             ? { ...item, quantity: Math.min(item.quantity + qty, p.stock) }
             : item
         );
+      } else {
+        updatedCart = [...prev, { product: p, quantity: qty, selectedColor: color }];
       }
-      return [...prev, { product: p, quantity: qty, selectedColor: color }];
+      localStorage.setItem('vantage_cart', JSON.stringify(updatedCart));
+      return updatedCart;
     });
     toast.success(t('itemAdded'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B', border: '1px solid #D4AF37' } });
   };
 
   const removeFromCart = (id: string, color?: string) => {
-    setCart(prev => prev.filter(item => !(item.product.id === id && item.selectedColor === color)));
+    setCart(prev => {
+      const updatedCart = prev.filter(item => !(item.product.id === id && item.selectedColor === color));
+      localStorage.setItem('vantage_cart', JSON.stringify(updatedCart));
+      return updatedCart;
+    });
     toast.success(t('itemRemoved'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B' } });
   };
 
   const updateCartQty = (id: string, qty: number, color?: string) => {
     if (qty < 1) return removeFromCart(id, color);
-    setCart(prev => prev.map(item =>
-      (item.product.id === id && item.selectedColor === color) ? { ...item, quantity: qty } : item
-    ));
+    setCart(prev => {
+      const updatedCart = prev.map(item =>
+        (item.product.id === id && item.selectedColor === color) ? { ...item, quantity: qty } : item
+      );
+      localStorage.setItem('vantage_cart', JSON.stringify(updatedCart));
+      return updatedCart;
+    });
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem('vantage_cart');
+  };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const toggleWishlist = (id: string) => {
     setWishlist(prev => {
+      let updatedWishlist;
       if (prev.includes(id)) {
         toast.success(t('removedFromWishlist'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B' } });
-        return prev.filter(i => i !== id);
+        updatedWishlist = prev.filter(i => i !== id);
+      } else {
+        toast.success(t('addedToWishlist'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B', border: '1px solid #D4AF37' } });
+        updatedWishlist = [...prev, id];
       }
-      toast.success(t('addedToWishlist'), { style: { background: dark ? '#1A1A1A' : '#fff', color: dark ? '#fff' : '#0B0B0B', border: '1px solid #D4AF37' } });
-      return [...prev, id];
+      localStorage.setItem('vantage_wishlist', JSON.stringify(updatedWishlist));
+      return updatedWishlist;
     });
   };
 
@@ -195,7 +207,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const addOrder = async (order: Order) => {
     try {
-      await setDoc(doc(db, 'orders', order.id), order);
+      const updatedOrders = [order, ...orders];
+      setOrders(updatedOrders);
+      localStorage.setItem('vantage_orders', JSON.stringify(updatedOrders));
+      await syncDb(products, updatedOrders);
     } catch (error) {
       console.error("Error adding order: ", error);
       toast.error("Failed to save order to server");
@@ -204,15 +219,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const updateOrderStatus = async (id: string, status: Order['status']) => {
     try {
-      await updateDoc(doc(db, 'orders', id), { status });
+      const updatedOrders = orders.map(o => o.id === id ? { ...o, status } : o);
+      setOrders(updatedOrders);
+      localStorage.setItem('vantage_orders', JSON.stringify(updatedOrders));
+      await syncDb(products, updatedOrders);
     } catch (error) {
       console.error("Error updating order: ", error);
     }
   };
 
   const adminLogin = (user: string, pass: string): boolean => {
-    // Simple auth: username "admin", password "admin123"
-    // In production, this would be server-side
     if (user === 'admin' && pass === 'admin123') {
       setIsAdmin(true);
       sessionStorage.setItem('vantage_admin', 'true');
@@ -243,7 +259,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       wishlist, toggleWishlist, isInWishlist,
       orders, addOrder, updateOrderStatus,
       isAdmin, adminLogin, adminLogout,
-      applyCoupon,
+      applyCoupon, syncDb
     }}>
       {children}
     </StoreContext.Provider>
