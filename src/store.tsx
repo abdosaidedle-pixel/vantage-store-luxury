@@ -50,7 +50,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('vantage_dark') === 'true';
   });
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const stored = localStorage.getItem('vantage_products_cache');
+    return stored ? JSON.parse(stored) : [];
+  });
+  
   const [cart, setCart] = useState<CartItem[]>(() => {
     const stored = localStorage.getItem('vantage_cart');
     return stored ? JSON.parse(stored) : [];
@@ -70,6 +74,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const unsub = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(items);
+      localStorage.setItem('vantage_products_cache', JSON.stringify(items));
+    }, (error) => {
+      console.error("Firestore sync error:", error);
     });
     return unsub;
   }, []);

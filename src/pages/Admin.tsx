@@ -436,7 +436,7 @@ export default function Admin() {
               setEditingProduct(null);
             } catch (error) {
               console.error("Save error:", error);
-              toast.error("Failed to save product");
+              toast.error(lang === 'ar' ? "فشل حفظ المنتج. تأكد من إعداد Firebase بشكل صحيح." : "Failed to save product. Check Firebase configuration.");
             }
           }}
           t={t}
