@@ -55,7 +55,7 @@ ${items}
 💵 *${t('total')}:* ${total} ${t('egp')}
 
 💳 *${t('paymentMethod')}:* ${paymentMethod === 'vodafone_cash' ? t('vodafoneCash') : t('cashOnDelivery')}
-${paymentMethod === 'vodafone_cash' ? `📋 *${t('paymentRef')}:* ${paymentRef}` : ''}
+
 
 📝 *${t('notes')}:* ${customer.notes || '-'}
 ━━━━━━━━━━━━━━━━━━━━
@@ -81,8 +81,8 @@ ${paymentMethod === 'vodafone_cash' ? `📋 *${t('paymentRef')}:* ${paymentRef}`
       discount: 0,
       total,
       paymentMethod,
-      paymentRef,
-      paymentScreenshot: screenshotName,
+      paymentRef: '',
+      paymentScreenshot: '',
       status: 'pending',
       notes: customer.notes,
       createdAt: new Date().toISOString(),

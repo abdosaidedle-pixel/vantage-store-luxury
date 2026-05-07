@@ -2,7 +2,7 @@ import { useStore } from '../store';
 import { Heart } from 'lucide-react';
 
 export default function Footer() {
-  const { t, dark } = useStore();
+  const { t, lang, dark } = useStore();
   const currentYear = new Date().getFullYear();
 
   return (
