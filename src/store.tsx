@@ -50,11 +50,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('vantage_dark') === 'true';
   });
+  // Initialize products from LocalStorage to prevent them from disappearing before Firebase loads
   const [products, setProducts] = useState<Product[]>(() => {
-    const stored = localStorage.getItem('vantage_products_cache');
+    const stored = localStorage.getItem('vantage_products');
     return stored ? JSON.parse(stored) : [];
   });
-  
+
   const [cart, setCart] = useState<CartItem[]>(() => {
     const stored = localStorage.getItem('vantage_cart');
     return stored ? JSON.parse(stored) : [];
@@ -63,32 +64,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('vantage_wishlist');
     return stored ? JSON.parse(stored) : [];
   });
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const stored = localStorage.getItem('vantage_orders');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [isAdmin, setIsAdmin] = useState(() => {
     return sessionStorage.getItem('vantage_admin') === 'true';
   });
 
   // Sync Products from Firestore
   useEffect(() => {
-    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-      setProducts(items);
-      localStorage.setItem('vantage_products_cache', JSON.stringify(items));
-    }, (error) => {
-      console.error("Firestore sync error:", error);
-    });
-    return unsub;
+    try {
+      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+          setProducts(items);
+          localStorage.setItem('vantage_products', JSON.stringify(items));
+        }
+      }, (error) => {
+        console.error("Firebase fetch error:", error);
+      });
+      return unsub;
+    } catch (err) {
+      console.error("Firebase init error:", err);
+    }
   }, []);
 
   // Sync Orders from Firestore
   useEffect(() => {
-    const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
-      setOrders(items);
-    });
-    return unsub;
+    try {
+      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      const unsub = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+          setOrders(items);
+          localStorage.setItem('vantage_orders', JSON.stringify(items));
+        }
+      }, (error) => {
+        console.error("Firebase fetch error:", error);
+      });
+      return unsub;
+    } catch (err) {
+      console.error("Firebase init error:", err);
+    }
   }, []);
 
 

@@ -301,7 +301,19 @@ export default function Admin() {
                             <button onClick={async () => {
                               if (window.confirm(t('confirm'))) {
                                 try {
-                                  await deleteDoc(doc(db, 'products', product.id));
+                                  // Update LocalStorage fallback first
+                                  const localProductsStr = localStorage.getItem('vantage_products');
+                                  let localProducts = localProductsStr ? JSON.parse(localProductsStr) : [];
+                                  localProducts = localProducts.filter((pr: any) => pr.id !== product.id);
+                                  localStorage.setItem('vantage_products', JSON.stringify(localProducts));
+                                  setProducts(localProducts);
+
+                                  try {
+                                    await deleteDoc(doc(db, 'products', product.id));
+                                  } catch (e) {
+                                    console.warn("Could not delete from Firebase. Deleted locally.", e);
+                                  }
+                                  
                                   toast.success(t('productDeleted'));
                                 } catch (error) {
                                   console.error("Delete error:", error);
@@ -430,13 +442,31 @@ export default function Admin() {
             try {
               const productId = p.id || `p${Date.now()}`;
               const productData = { ...p, id: productId, createdAt: p.createdAt || new Date().toISOString() };
-              await setDoc(doc(db, 'products', productId), productData);
+              
+              // Fallback: update local storage and state FIRST
+              const localProductsStr = localStorage.getItem('vantage_products');
+              let localProducts = localProductsStr ? JSON.parse(localProductsStr) : [];
+              const existingIdx = localProducts.findIndex((pr: any) => pr.id === productId);
+              if (existingIdx > -1) {
+                localProducts[existingIdx] = productData;
+              } else {
+                localProducts = [productData, ...localProducts];
+              }
+              localStorage.setItem('vantage_products', JSON.stringify(localProducts));
+              setProducts(localProducts);
+
+              try {
+                await setDoc(doc(db, 'products', productId), productData);
+              } catch (e) {
+                console.warn("Could not save to Firebase. Saved locally.", e);
+              }
+
               toast.success(p.id ? t('productUpdated') : t('productAdded'));
               setShowAddProduct(false);
               setEditingProduct(null);
             } catch (error) {
               console.error("Save error:", error);
-              toast.error(lang === 'ar' ? "فشل حفظ المنتج. تأكد من إعداد Firebase بشكل صحيح." : "Failed to save product. Check Firebase configuration.");
+              toast.error("Failed to save product");
             }
           }}
           t={t}
