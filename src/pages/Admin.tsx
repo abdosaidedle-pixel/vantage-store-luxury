@@ -35,26 +35,32 @@ export default function Admin() {
     setOtpCode(code);
 
     try {
-      // Note: To make this work, you must create an account on emailjs.com
-      // 1. Create a Service (e.g., 'service_vantage')
-      // 2. Create a Template (e.g., 'template_vantage_otp') with {{to_email}} and {{otp_code}}
-      // 3. Replace 'YOUR_PUBLIC_KEY' with your actual Public Key from Account settings
-      await emailjs.send(
-        'service_vantage', 
-        'template_vantage_otp', 
-        {
-          to_email: email,
-          otp_code: code,
+      // Using FormSubmit for zero-config email sending
+      // Note: The very first time this runs, it will send an "Activation" email to the address.
+      // The user must click "Activate" in that email before subsequent emails will be delivered.
+      const response = await fetch("https://formsubmit.co/ajax/kareemshapaan888@gmail.com", {
+        method: "POST",
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         },
-        'YOUR_PUBLIC_KEY'
-      );
+        body: JSON.stringify({
+            _subject: "Vantage Store - Admin Verification Code",
+            _captcha: "false",
+            "Your Login Code": code
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email via FormSubmit");
+      }
       
       setLoginStep('otp');
-      toast.success(lang === 'ar' ? 'تم إرسال كود التحقق لجيميلك' : 'Verification code sent to your Gmail');
+      toast.success(lang === 'ar' ? 'تم إرسال كود التحقق لجيميلك (تأكد من الرسائل غير المرغوب فيها)' : 'Verification code sent to your Gmail (Check Spam)');
     } catch (error) {
-      console.error("EmailJS Error:", error);
-      // Fallback: Show the code in a toast so the user can log in even if EmailJS is not configured
-      toast.success(lang === 'ar' ? `كود الدخول (للتجربة): ${code}` : `Access Code (Test): ${code}`, { 
+      console.error("Email Error:", error);
+      // Fallback: Show the code in a toast so the user can log in even if email fails
+      toast.success(lang === 'ar' ? `كود الدخول (بسبب خطأ الإيميل): ${code}` : `Access Code (Fallback): ${code}`, { 
         duration: 10000,
         style: { border: '1px solid #D4AF37', fontWeight: 'bold' }
       });
